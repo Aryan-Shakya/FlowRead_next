@@ -90,8 +90,8 @@ export default function Reader({ params }: { params: { docId: string } }) {
     const [fontSize, setFontSize] = useState(80);
     const [fontFamily, setFontFamily] = useState('inter');
     const [colorPreset, setColorPreset] = useState('montessori');
-    const [customVowelColor] = useState('#3B82F6');
-    const [customConsonantColor] = useState('#EF4444');
+    const [customVowelColor, setCustomVowelColor] = useState('#3B82F6');
+    const [customConsonantColor, setCustomConsonantColor] = useState('#EF4444');
     const [useCustomColors, setUseCustomColors] = useState(false);
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [bookmark, setBookmark] = useState<number | null>(null);
@@ -441,6 +441,37 @@ export default function Reader({ params }: { params: { docId: string } }) {
                                             <SelectItem value="custom">Custom Colors</SelectItem>
                                         </SelectContent>
                                     </Select>
+
+                                    {useCustomColors && (
+                                        <div className="space-y-3 mt-4 p-4 border rounded-lg">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="vowel-color">Vowel Color</Label>
+                                                <div className="flex gap-2 items-center">
+                                                    <input
+                                                        id="vowel-color"
+                                                        type="color"
+                                                        value={customVowelColor}
+                                                        onChange={(e) => setCustomVowelColor(e.target.value)}
+                                                        className="h-10 w-20 rounded cursor-pointer border"
+                                                    />
+                                                    <span className="text-sm text-muted-foreground">{customVowelColor}</span>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="consonant-color">Consonant Color</Label>
+                                                <div className="flex gap-2 items-center">
+                                                    <input
+                                                        id="consonant-color"
+                                                        type="color"
+                                                        value={customConsonantColor}
+                                                        onChange={(e) => setCustomConsonantColor(e.target.value)}
+                                                        className="h-10 w-20 rounded cursor-pointer border"
+                                                    />
+                                                    <span className="text-sm text-muted-foreground">{customConsonantColor}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </SheetContent>
