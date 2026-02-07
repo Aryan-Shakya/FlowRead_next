@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
         if (fileExtension === 'pdf') {
             // Dynamic import for pdf-parse (CommonJS module)
             const pdfParseModule = await import('pdf-parse');
-            const pdfParse = (pdfParseModule as any).default || pdfParseModule;
+            const pdfParse = (pdfParseModule as unknown as { default?: typeof pdfParseModule }).default || pdfParseModule;
             const data = await pdfParse(buffer);
             text = data.text;
         } else if (fileExtension === 'docx') {
