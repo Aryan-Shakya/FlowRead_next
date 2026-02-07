@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 28 4% 98%;
+    --foreground: 18 10% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 18 10% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 18 10% 11%;
+    --primary: 239 84% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 28 4% 96%;
+    --secondary-foreground: 18 10% 11%;
+    --muted: 28 4% 96%;
+    --muted-foreground: 30 5% 48%;
+    --accent: 28 4% 96%;
+    --accent-foreground: 18 10% 11%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 25 6% 90%;
+    --input: 25 6% 90%;
+    --ring: 239 84% 58%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 240 6% 4%;
+    --foreground: 0 0% 98%;
+    --card: 240 5% 9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 5% 9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 239 71% 66%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 4% 15%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 4% 15%;
+    --muted-foreground: 240 5% 63%;
+    --accent: 240 4% 15%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 4% 15%;
+    --input: 240 4% 15%;
+    --ring: 239 71% 66%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .hero-gradient {
+    background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.08), transparent),
+                radial-gradient(circle at bottom left, rgba(99, 102, 241, 0.05), transparent);
+    @apply bg-background;
+  }
+}
