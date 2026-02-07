@@ -24,9 +24,10 @@ export async function POST(request: NextRequest) {
         const fileExtension = fileName.split('.').pop()?.toLowerCase();
 
         if (fileExtension === 'pdf') {
-            // Dynamic import for pdf-parse (CommonJS module)
+            // Dynamic import for pdf-parse (CommonJS module with complex interop)
             const pdfParseModule = await import('pdf-parse');
-            const pdfParse = (pdfParseModule as unknown as { default?: typeof pdfParseModule }).default || pdfParseModule;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const pdfParse = (pdfParseModule as any).default || pdfParseModule;
             const data = await pdfParse(buffer);
             text = data.text;
         } else if (fileExtension === 'docx') {
