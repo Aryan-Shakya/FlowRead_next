@@ -24,12 +24,10 @@ export async function POST(request: NextRequest) {
         const fileExtension = fileName.split('.').pop()?.toLowerCase();
 
         if (fileExtension === 'pdf') {
-            // Dynamic import for pdf-parse (CommonJS module with complex interop)
-            const pdfParseModule = await import('pdf-parse');
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const pdfParse = (pdfParseModule as any).default || pdfParseModule;
-            const data = await pdfParse(buffer);
-            text = data.text;
+            // PDF support temporarily disabled due to deployment constraints
+            return NextResponse.json({
+                error: 'PDF uploads are temporarily unavailable. Please use DOCX or TXT files.'
+            }, { status: 400 });
         } else if (fileExtension === 'docx') {
             const result = await mammoth.extractRawText({ buffer });
             text = result.value;
