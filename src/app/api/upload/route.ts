@@ -7,6 +7,10 @@ const pdf = require('pdf-parse');
 import mammoth from 'mammoth';
 import { processTextToWords } from '@/lib/syllables';
 
+// Configure route for file uploads
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
     try {
         const formData = await request.formData();
