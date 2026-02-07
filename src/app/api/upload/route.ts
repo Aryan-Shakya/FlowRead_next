@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/mongodb';
 import { v4 as uuidv4 } from 'uuid';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const pdf = require('pdf-parse');
 import mammoth from 'mammoth';
 import { processTextToWords } from '@/lib/syllables';
 
 // Configure route for file uploads
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // Allow up to 60 seconds for file processing
 
 export async function POST(request: NextRequest) {
     try {
@@ -26,7 +24,10 @@ export async function POST(request: NextRequest) {
         const fileExtension = fileName.split('.').pop()?.toLowerCase();
 
         if (fileExtension === 'pdf') {
-            const data = await pdf(buffer);
+            // Dynamic import for pdf-parse (CommonJS module)
+            const pdfParseModule = await import('pdf-parse');
+            const pdfParse = (pdfParseModule as any).default || pdfParseModule;
+            const data = await pdfParse(buffer);
             text = data.text;
         } else if (fileExtension === 'docx') {
             const result = await mammoth.extractRawText({ buffer });
