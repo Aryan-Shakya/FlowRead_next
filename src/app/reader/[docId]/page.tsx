@@ -305,6 +305,16 @@ export default function Reader({ params }: { params: { docId: string } }) {
             ? { vowel: customVowelColor, consonant: customConsonantColor }
             : COLOR_PRESETS[colorPreset];
 
+        if (typeof wordData === 'string' || !wordData.syllables) {
+            return (
+                <div className="flex flex-wrap justify-center items-center gap-1">
+                    <span style={{ color: colors.consonant }}>
+                        {typeof wordData === 'string' ? wordData : (wordData as { word?: string }).word || ''}
+                    </span>
+                </div>
+            );
+        }
+
         return (
             <div className="flex flex-wrap justify-center items-center gap-1">
                 {wordData.syllables.map((syllable: string, sylIndex: number) => (

@@ -24,6 +24,21 @@ export function getVowelIndices(syllable: string): number[] {
     return indices;
 }
 
-export function processTextToWords(text: string): string[] {
-    return text.split(/\s+/).filter(word => word.length > 0);
+export interface ProcessedWord {
+    word: string;
+    syllables: string[];
+    vowels: number[][];
+}
+
+export function processTextToWords(text: string): ProcessedWord[] {
+    const rawWords = text.split(/\s+/).filter(word => word.length > 0);
+    return rawWords.map(word => {
+        const syllables = detectSyllables(word);
+        const vowels = syllables.map(syl => getVowelIndices(syl));
+        return {
+            word,
+            syllables,
+            vowels
+        };
+    });
 }
