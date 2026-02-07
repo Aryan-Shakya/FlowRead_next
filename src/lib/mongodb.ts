@@ -1,4 +1,5 @@
-import { MongoClient, Db, Collection } from 'mongodb';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { MongoClient, Db, Collection, DeleteResult, InsertOneResult, UpdateResult } from 'mongodb';
 import fs from 'fs';
 import path from 'path';
 
@@ -9,7 +10,7 @@ let client: MongoClient;
 let clientPromise: Promise<MongoClient> | null = null;
 
 // Mock implementation for isolated environments
-class MockCollection {
+class MockCollection<T extends { [key: string]: any }> {
     name: string;
     filePath: string;
 
@@ -24,7 +25,7 @@ class MockCollection {
         }
     }
 
-    private read(): any[] {
+    private read(): T[] {
         try {
             if (!fs.existsSync(this.filePath)) return [];
             return JSON.parse(fs.readFileSync(this.filePath, 'utf-8'));
@@ -33,11 +34,11 @@ class MockCollection {
         }
     }
 
-    private write(data: any[]) {
+    private write(data: T[]) {
         fs.writeFileSync(this.filePath, JSON.stringify(data, null, 2));
     }
 
-    find(query: any = {}) {
+    find(query: Partial<T> = {}) {
         let data = this.read();
         if (Object.keys(query).length > 0) {
             data = data.filter(item => {
@@ -47,7 +48,7 @@ class MockCollection {
 
         const cursor = {
             _data: [...data],
-            sort(sortQuery: any) {
+            sort(sortQuery: { [key: string]: number }) {
                 this._data.sort((a, b) => {
                     const key = Object.keys(sortQuery)[0];
                     const dir = sortQuery[key];
@@ -57,7 +58,7 @@ class MockCollection {
                 });
                 return this;
             },
-            project(projectQuery: any) {
+            project(projectQuery: { [key: string]: number }) {
                 this._data = this._data.map(item => {
                     const newItem = { ...item };
                     Object.entries(projectQuery).forEach(([key, val]) => {
@@ -81,7 +82,7 @@ class MockCollection {
 
     aggregate(pipeline: any[]) {
         const data = this.read();
-        let result = [...data];
+        let result: any[] = [...data];
 
         // Minimal pipeline support for the specific stats query
         for (const stage of pipeline) {
@@ -116,22 +117,22 @@ class MockCollection {
         };
     }
 
-    async findOne(query: any) {
+    async findOne(query: Partial<T>) {
         const data = this.read();
         return data.find(item => {
             return Object.entries(query).every(([key, value]) => item[key] === value);
         }) || null;
     }
 
-    async insertOne(doc: any) {
+    async insertOne(doc: T): Promise<InsertOneResult> {
         const data = this.read();
         const newDoc = { ...doc, _id: doc.id || Math.random().toString(36).substr(2, 9) };
-        data.push(newDoc);
+        data.push(newDoc as T);
         this.write(data);
-        return { insertedId: newDoc._id };
+        return { acknowledged: true, insertedId: newDoc._id } as InsertOneResult;
     }
 
-    async updateOne(query: any, update: any) {
+    async updateOne(query: Partial<T>, update: any): Promise<UpdateResult> {
         const data = this.read();
         const index = data.findIndex(item => {
             return Object.entries(query).every(([key, value]) => item[key] === value);
@@ -141,32 +142,32 @@ class MockCollection {
                 data[index] = { ...data[index], ...update.$set };
             }
             this.write(data);
-            return { modifiedCount: 1 };
+            return { acknowledged: true, matchedCount: 1, modifiedCount: 1, upsertedCount: 0, upsertedId: null } as UpdateResult;
         }
-        return { modifiedCount: 0 };
+        return { acknowledged: true, matchedCount: 0, modifiedCount: 0, upsertedCount: 0, upsertedId: null } as UpdateResult;
     }
 
-    async deleteOne(query: any) {
+    async deleteOne(query: Partial<T>): Promise<DeleteResult> {
         const data = this.read();
         const newData = data.filter(item => {
             return !Object.entries(query).every(([key, value]) => item[key] === value);
         });
         const deletedCount = data.length - newData.length;
         this.write(newData);
-        return { deletedCount };
+        return { acknowledged: true, deletedCount } as DeleteResult;
     }
 
-    async deleteMany(query: any) {
+    async deleteMany(query: Partial<T>): Promise<DeleteResult> {
         const data = this.read();
         const newData = data.filter(item => {
             return !Object.entries(query).every(([key, value]) => item[key] === value);
         });
         const deletedCount = data.length - newData.length;
         this.write(newData);
-        return { deletedCount };
+        return { acknowledged: true, deletedCount } as DeleteResult;
     }
 
-    async countDocuments(query: any = {}) {
+    async countDocuments(query: Partial<T> = {}) {
         const cursor = this.find(query);
         const arr = await cursor.toArray();
         return arr.length;
@@ -174,8 +175,8 @@ class MockCollection {
 }
 
 class MockDb {
-    collection(name: string) {
-        return new MockCollection(name) as unknown as Collection<any>;
+    collection<T extends { [key: string]: any }>(name: string) {
+        return new MockCollection<T>(name) as unknown as Collection<T>;
     }
 }
 
