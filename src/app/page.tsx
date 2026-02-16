@@ -6,7 +6,7 @@ import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Upload, Zap, BookOpen, BarChart, Moon, Sun } from 'lucide-react';
+import { Upload, Zap, BookOpen, BarChart, Moon, Sun, FileText, Type } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -15,6 +15,36 @@ export default function Landing() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [uploading, setUploading] = useState(false);
+  const [mode, setMode] = useState<'file' | 'text'>('file');
+  const [pastedText, setPastedText] = useState('');
+
+  const handleTextSubmit = async () => {
+    if (!pastedText.trim()) {
+      toast.error('Please enter some text');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('text', pastedText);
+
+    setUploading(true);
+    try {
+      const response = await axios.post('/api/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      toast.success('Text processed successfully!');
+      router.push(`/reader/${response.data.id}`);
+    } catch (error) {
+      console.error('Upload error:', error);
+      const err = error as { response?: { data?: { error?: string } } };
+      toast.error(err.response?.data?.error || 'Failed to process text');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const onDrop = async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
@@ -117,26 +147,79 @@ export default function Landing() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
           >
-            <Card
-              {...getRootProps()}
-              data-testid="file-upload-zone"
-              className={`
-                p-12 cursor-pointer border-2 border-dashed transition-all duration-200
-                ${isDragActive
-                  ? 'border-primary bg-primary/5 scale-105'
-                  : 'border-border hover:border-primary/50 hover:bg-accent/50'
-                }
-                ${uploading ? 'opacity-50 cursor-not-allowed' : ''}
-              `}
-            >
-              <input {...getInputProps()} disabled={uploading} />
-              <Upload className="w-16 h-16 mx-auto mb-4 text-primary" />
-              <h3 className="text-2xl font-manrope font-semibold mb-2">
-                {uploading ? 'Uploading...' : isDragActive ? 'Drop your file here' : 'Upload Your Document'}
-              </h3>
-              <p className="text-muted-foreground">
-                Drag & drop or click to upload PDF, DOCX, or TXT files
-              </p>
+            <Card className="p-8 backdrop-blur-xl bg-card/50 border-border/50">
+              {/* Mode Tabs */}
+              <div className="flex gap-2 mb-6">
+                <Button
+                  variant={mode === 'file' ? 'default' : 'outline'}
+                  onClick={() => setMode('file')}
+                  className="flex-1"
+                  disabled={uploading}
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Upload File
+                </Button>
+                <Button
+                  variant={mode === 'text' ? 'default' : 'outline'}
+                  onClick={() => setMode('text')}
+                  className="flex-1"
+                  disabled={uploading}
+                >
+                  <Type className="w-4 h-4 mr-2" />
+                  Paste Text
+                </Button>
+              </div>
+
+              {/* File Upload Mode */}
+              {mode === 'file' && (
+                <div
+                  {...getRootProps()}
+                  data-testid="file-upload-zone"
+                  className={`
+                    p-12 cursor-pointer border-2 border-dashed rounded-lg transition-all duration-200
+                    ${isDragActive
+                      ? 'border-primary bg-primary/5 scale-105'
+                      : 'border-border hover:border-primary/50 hover:bg-accent/50'
+                    }
+                    ${uploading ? 'opacity-50 cursor-not-allowed' : ''}
+                  `}
+                >
+                  <input {...getInputProps()} disabled={uploading} />
+                  <Upload className="w-16 h-16 mx-auto mb-4 text-primary" />
+                  <h3 className="text-2xl font-manrope font-semibold mb-2 text-center">
+                    {uploading ? 'Uploading...' : isDragActive ? 'Drop your file here' : 'Upload Your Document'}
+                  </h3>
+                  <p className="text-muted-foreground text-center">
+                    Drag & drop or click to upload PDF, DOCX, or TXT files
+                  </p>
+                </div>
+              )}
+
+              {/* Text Paste Mode */}
+              {mode === 'text' && (
+                <div className="space-y-4">
+                  <textarea
+                    value={pastedText}
+                    onChange={(e) => setPastedText(e.target.value)}
+                    placeholder="Paste your text here..."
+                    disabled={uploading}
+                    className="w-full min-h-[300px] p-4 rounded-lg border border-border bg-background resize-y focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed font-mono text-sm"
+                    maxLength={50000}
+                  />
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">
+                      {pastedText.length.toLocaleString()} / 50,000 characters
+                    </span>
+                    <Button
+                      onClick={handleTextSubmit}
+                      disabled={uploading || !pastedText.trim()}
+                      size="lg"
+                    >
+                      {uploading ? 'Processing...' : 'Start Reading'}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </Card>
           </motion.div>
         </motion.div>

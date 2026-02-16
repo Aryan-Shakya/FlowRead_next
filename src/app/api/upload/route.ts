@@ -12,27 +12,48 @@ export const maxDuration = 60; // Allow up to 60 seconds for file processing
 export async function POST(request: NextRequest) {
     try {
         const formData = await request.formData();
-        const file = formData.get('file') as File;
 
-        if (!file) {
-            return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
-        }
-
-        const buffer = Buffer.from(await file.arrayBuffer());
         let text = '';
-        const fileName = file.name;
-        const fileExtension = fileName.split('.').pop()?.toLowerCase();
+        let fileName = '';
+        let fileExtension = '';
 
-        if (fileExtension === 'pdf') {
-            // PDF support temporarily disabled due to deployment constraints
-            return NextResponse.json({
-                error: 'PDF uploads are temporarily unavailable. Please use DOCX or TXT files.'
-            }, { status: 400 });
-        } else if (fileExtension === 'docx') {
-            const result = await mammoth.extractRawText({ buffer });
-            text = result.value;
+        // Check if this is a text paste or file upload
+        if (formData.has('text')) {
+            // Direct text input
+            text = formData.get('text') as string;
+            const timestamp = new Date().toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+            fileName = `Pasted Text - ${timestamp}`;
+            fileExtension = 'txt';
         } else {
-            text = buffer.toString('utf-8');
+            // File upload
+            const file = formData.get('file') as File;
+
+            if (!file) {
+                return NextResponse.json({ error: 'No file or text provided' }, { status: 400 });
+            }
+
+            const buffer = Buffer.from(await file.arrayBuffer());
+            fileName = file.name;
+            fileExtension = fileName.split('.').pop()?.toLowerCase() || '';
+
+            if (fileExtension === 'pdf') {
+                // PDF support temporarily disabled due to deployment constraints
+                return NextResponse.json({
+                    error: 'PDF uploads are temporarily unavailable. Please use DOCX or TXT files.'
+                }, { status: 400 });
+            } else if (fileExtension === 'docx') {
+                const result = await mammoth.extractRawText({ buffer });
+                text = result.value;
+            } else {
+                text = buffer.toString('utf-8');
+            }
         }
 
         const words = processTextToWords(text);
